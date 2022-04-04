@@ -33,6 +33,30 @@ Preco float not null
 
 alter table tbProduto add Cor varchar(50) null;
 
+create database dbLogica;
+use dbLogica;
 
+create table tbCliente(
+NomeCli varchar (50) not null,
+Codigocli int primary key,
+DataCadastro date not null
+);
 
+create table tbFuncionario(
+NomeFunc varchar(50) not null,
+CodigoFunc int primary key,
+DataCadastro datetime not null
+);
 
+drop database dblojagrande;
+
+alter table tbCliente add CPT bigint not null unique;
+
+-- Felipe e Andriely
+
+create database dbEscola;
+use dbEscola;
+
+create table tbCliente(
+idCli int not null primary key 
+);
