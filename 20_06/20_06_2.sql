@@ -1,5 +1,5 @@
-create database dbdissssi;
-use dbdissssi;
+create database dbdfe;
+use dbdfe;
 
 create table tbcliente(
 idCli int primary key auto_increment not null,
@@ -82,7 +82,7 @@ create table tbPedidoComprar(
 ValorItem decimal(5, 2) not null,
 Qtd bigint not null,
 primary key(CodigoBarras, NotaFiscal),
-CodigoBarras int,
+CodigoBarras bigint,
 foreign key (CodigoBarras) references tbproduto (CodigoBarras),
 NotaFiscal int,
 foreign key (NotaFiscal) references tbcompra (NotaFiscal)
@@ -106,7 +106,7 @@ Qtd bigint not null,
 primary key(NumeroVenda, CodigoBarras),
 NumeroVenda int, 
 foreign key (NumeroVenda) references tbvendas (NumeroVenda),
-CodigoBarras int, 
+CodigoBarras bigint, 
 foreign key (CodigoBarras) references tbproduto (CodigoBarras)
 );
 
@@ -142,6 +142,8 @@ call spInsertCid ("Osasco");
 call spInsertCid ("Pirituba");
 call spInsertCid ("Lapa");
 call spInsertCid ("Ponta Grossa");
+call spInsertCid("São Paulo");
+call spInsertCid("Barra Mansa");
 
 select * from tbCidade;
 
@@ -157,7 +159,6 @@ call spInsertest ("RS");
 
 select * from tbUF; 
 
-
 delete from tbCidade where IdCidade = 3; 
 
 delimiter $$
@@ -170,6 +171,10 @@ call spInsety ("Aclimação");
 call spInsety("Capão Redondo");
 call spInsety ("Pirituba");
 call spInsety ("Liberdade");
+call spInsety("Lapa");
+call spInsety("Consolação");
+call spInsety("Penha");
+call spInsety("Barra Funda");
 
 select* from tbBairro
 
@@ -189,3 +194,29 @@ call spInsetyix ('12345678910117', "Farinha de Surui", 50.00, "200");
 call spInsetyix ('12345678910118', "Zelador de cemiterio", 24.50, "100");
 
 select * from tbProduto;
+
+delimiter $$
+create procedure spInsertEnde(vCep int, vLogradouro varchar(200), vIdBairro int, vIdCidade int, vIdUF int)
+begin
+	if not exists(select* from tbendereco where vCep = Cep) then
+    insert into tbendereco(Cep, Logradouro, idBairro, IdCidade, IdUF)
+                values(vCep, vLogradouro, vIdBairro, vIdCidade, vIdUF);
+	else
+      select "Informaçoes já registradas";
+    end if;
+end$$
+
+
+call spInsertEnde(12345050, 'Rua da Federal', 5, 9, 1);
+call spInsertEnde(12345051, 'Av Brasil', 5, 3, 1);
+call spInsertEnde(12345052, 'Rua Liberdade', 6, 9, 1);
+call spInsertEnde(12345053, 'Av Paulista', 7, 1, 2);
+call spInsertEnde(12345054, 'Rua Ximbú', 7, 1, 2);
+call spInsertEnde(12345055, 'Rua Piu XI', 7, 3, 1);
+call spInsertEnde(12345056, 'Rua Chocolate', 1, 10, 2);
+call spInsertEnde(12345057, 'Rua Pão na Chapa', 8, 8, 3);
+
+select * from tbBairro;
+select * from tbCidade;
+select * from tbUF;
+select * from tbEndereco;
