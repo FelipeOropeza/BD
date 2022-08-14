@@ -226,7 +226,7 @@ delimiter $$
 create procedure spInsertCliPf(vNomeCLi varchar(200), vNumEnd int, CompleEnd varchar(50), vCep int, vCpf bigint, vRg bigint, 
 							   vRg_Dig char(1), VNasc date, vLogradouro varchar(200), vIdBairro int, vIdCidade int, vIdUF int)
 begin
-	if not exists(select * from tbclientpf where vCpf = Cpf) and (select *from tbendereco where vCep = cep)then
+	if not exists(select * from tbclientpf where vCpf = Cpf) then
 		insert into tbcliente(NomeCli, NumEnd, CompleEnd, Cep)
                     values(vNomeCli,vNumEnd, CompleEnd, vCep);
 		insert into tbclientpf(Cpf, Rg, Rg_dig, Nasc, Idcli)
