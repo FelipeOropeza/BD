@@ -6,7 +6,7 @@ idCli int primary key auto_increment not null,
 NomeCli varchar(200) not null,
 NumEnd int null,
 CompleEnd varchar(50),
-Cep int not null, foreign key (Cep) references tbendereco (Cep)
+Cep bigint not null, foreign key (Cep) references tbendereco (Cep)
 );
 
 create table tbclientpf(
@@ -26,7 +26,7 @@ foreign key (idCli) references tbcliente (idCli)
 );
 
 create table tbendereco(
-Cep int primary key not null,
+Cep bigint primary key not null,
 Logradouro varchar(200) not null,
 idBairro int not null,
 foreign key (idBairro) references tbBairro (IdBairro), 
@@ -138,9 +138,6 @@ call spInsertCid ("Osasco");
 call spInsertCid ("Pirituba");
 call spInsertCid ("Lapa");
 call spInsertCid ("Ponta Grossa");
-call spInsertCid ("São Paulo");
-call spInsertCid ("Barra Mansa");
-call spInsertCid ("Cuiabá")
 
 select * from tbCidade;
 
@@ -153,7 +150,6 @@ end $$
 call spInsertest ("SP");
 call spInsertest ("RJ");
 call spInsertest ("RS");
-call spInsertest ("MT");
 
 select * from tbUF; 
 
@@ -170,11 +166,7 @@ call spInsety ("Aclimação");
 call spInsety ("Capão Redondo");
 call spInsety ("Pirituba");
 call spInsety ("Liberdade");
-call spInsety ("Lapa");
-call spInsety ("Consolação");
-call spInsety ("Penha");
-call spInsety ("Barra Funda");
-call spInsety ("Jardim Santa Isabel");
+CALL spInsety ("Lapa");
 
 select* from tbBairro
 
@@ -196,18 +188,29 @@ call spInsetyix ('12345678910118', "Zelador de cemiterio", 24.50, "100");
 select * from tbProduto;
 
 delimiter $$
-create procedure spInsertEnde(vCep int, vLogradouro varchar(200), vIdBairro int, vIdCidade int, vIdUF int)
+create procedure spInsertEnde(vCep int, vLogradouro varchar(200), vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
 begin
 	if not exists(select* from tbendereco where vCep = Cep) then
-    insert into tbendereco(Cep, Logradouro, idBairro, IdCidade, IdUF)
-                values(vCep, vLogradouro, vIdBairro, vIdCidade, vIdUF);
-	else
+    if not exists(select * from tbBairro where vNomeBairro = NomeBairro) then
+		insert into tbBairro(NomeBairro) values(vNomeBairro);
+	else if not exists(select * from tbCidade where vNomeCidade = NomeCidade) then
+		insert into tbCidade(NomeCidade) values(vNomeCidade);
+	else if not exists(select * from tbUf where vUF = UF) then
+		insert into tbUF (UF) values(vUF); 
+	else insert into tbendereco (Cep, Logradouro, idBairro, IdCidade, IdUF)
+                values(vCep, vLogradouro, (select idBairro from tbBairro where vNomeBairro = NomeBairro), (select idCidade from tbCidade where vNomeCidade = NomeCidade), 
+				       (select idUf from tbUF where vUF = UF));
+	end if;
+    end if;
+    end if;
+    else
       select "Informaçoes já registradas";
     end if;
 end$$
+select idBairro from tbBairro where NomeBairro = "Lapa";
 
-call spInsertEnde(12345050, 'Rua da Federal', 5, 9, 1);
-call spInsertEnde(12345051, 'Av Brasil', 5, 3, 1);
+call spInsertEnde(12345050, 'Rua da Federal', 'Lapa', 'São Paulo', 'SP');
+call spInsertEnde(12345051, 'Av Brasil', 'Lapa',  , 1);
 call spInsertEnde(12345052, 'Rua Liberdade', 6, 9, 1);
 call spInsertEnde(12345053, 'Av Paulista', 7, 1, 2);
 call spInsertEnde(12345054, 'Rua Ximbú', 7, 1, 2);
@@ -221,7 +224,6 @@ select * from tbBairro;
 select * from tbCidade;
 select * from tbUF;
 select * from tbEndereco;
-
 delimiter $$
 create procedure spInsertCliPf(vNomeCLi varchar(200), vNumEnd int, CompleEnd varchar(50), vCep int, vCpf bigint, vRg bigint, 
 							   vRg_Dig char(1), VNasc date, vLogradouro varchar(200), vIdBairro int, vIdCidade int, vIdUF int)
@@ -244,7 +246,28 @@ call spInsertCliPf('Marciano', 744, null, 12345054, 12345678913, 12345680, '0', 
 call spInsertCliPf('Lança Perfume', 128, null, 12345059, 12345678914, 12345681, 'X', '2004/04/05', 'Rua Veia', 9, 11, 4);
 call spInsertCliPf('Remédio Amargo', 2585, null, 12345058, 12345678915, 12345682, '0', '2002/07/15', 'Av Nova', 9, 11, 4);
 
+delete from tbendereco where cep = 12345051;
 select * from tbEndereco;
 select * from tbBairro;
 select * from tbclientpf;
 select * from tbcliente;
+
+delimiter $$
+create procedure spInsertCliPj(vNomeCLi varchar(200), vNumEnd int, vCompleEnd varchar(50), vCnpj bigint, vIe bigint,
+                               vCep bigint, vLogradouro varchar(200), vNomeBairro varchar(50), vCidade varchar(50), vUF char(2))
+
+begin
+	if not exists(select * from tbclientepj where vCnpj = Cnpj) then
+		insert into tbcliente(NomeCli, NumEnd, CompleEnd)
+                    values(vNomeCli,vNumEnd, vCompleEnd);
+		insert into tbclientepj(Cnpj, Ie, Idcli)
+                    values(vCnpj, vIe, (select Idcli from tbcliente where NomeCli = vNomeCli order by Idcli desc limit 1));
+	    insert into tbendereco(Cep, Logradouro, idBairro, IdCidade, IdUF)
+					values((select Cep from tbEndereco where Logradouro = vLogradouro), vLogradouro, (select idBairro from tbBairro where NomeBairro = vNomeBairro),(select idCidade from tbCidade where NomeCidade = vCidade),
+						(select idUf from tbUf where UF = vUF));
+	else
+	    select "informaçoes já resgistradas";
+    end if;
+end$$
+
+call spInsertCliPj("Paganada", 159, null,12345678912345, 98765432198, 13254051, "Av Brasil", "Lapa", "Campinas", "SP");
