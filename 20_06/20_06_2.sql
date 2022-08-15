@@ -224,6 +224,7 @@ select * from tbBairro;
 select * from tbCidade;
 select * from tbUF;
 select * from tbEndereco;
+
 delimiter $$
 create procedure spInsertCliPf(vNomeCLi varchar(200), vNumEnd int, CompleEnd varchar(50), vCep int, vCpf bigint, vRg bigint, 
 							   vRg_Dig char(1), VNasc date, vLogradouro varchar(200), vIdBairro int, vIdCidade int, vIdUF int)
