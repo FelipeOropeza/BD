@@ -77,11 +77,11 @@ foreign key (Codigo) references tbfornecedor (Codigo)
 create table tbPedidoComprar(
 ValorItem decimal(5, 2) not null,
 Qtd bigint not null,
-primary key(CodigoBarras, NotaFiscal),
-CodigoBarras bigint,
-foreign key (CodigoBarras) references tbproduto (CodigoBarras),
+primary key(NotaFiscal, CodigoBarras),
 NotaFiscal int,
-foreign key (NotaFiscal) references tbcompra (NotaFiscal)
+foreign key (NotaFiscal) references tbcompra (NotaFiscal),
+CodigoBarras bigint,
+foreign key (CodigoBarras) references tbproduto (CodigoBarras)
 );
 
 create table tbvendas(
@@ -307,21 +307,42 @@ delimiter $$
 create procedure spInsertCom(vNotaFiscal int, vNome varchar(200), vDataCompra date, vCodigoBarras bigint, vValorItem decimal(8,2),
                              vQtd int, vQtdTotal bigint, vValorTotal decimal(8,2))
 begin
+
+	if (select codigo from tbFornecedor where vNome = Nome) then
+		if (select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
+			if not exists(select NotaFiscal from tbCompra where vNotaFiscal = NotaFiscal) then
 	insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
 				  values(vNotaFiscal, vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
 	insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
 					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
                          (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
+	else	
+		insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
+				  values((select NotaFiscal from tbPedidoComprar where vNotaFiscal = NotaFiscal), vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
+	    insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
+					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
+                         (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
+    end if;
+    else
+        select('Produto já cadastrado');
+    end if;
+    else  
+		select('Fornecedor já cadastrado!');
+    end if;
 end $$ 
+
+delete from tbCompra where NotaFiscal = 8459;
 
 call spInsertCom(8459, 'Amoroso e Doce', '2018/05/01', 12345678910111, 22.22, 200, 700, 21944.00);
 call spInsertCom(2482, 'Revenda Chico Loco', '2020/04/22', 12345678910112, 40.50, 180, 180, 7290.00);
-call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678810113, 3.00, 300, 300, 900.00);
+call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678910113, 3.00, 300, 300, 900.00);
 call spInsertCom(8459, 'Amoroso e Doce', '2022/12/04', 12345678910114, 35.00, 500, 700, 21944.00);
-call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910114, 54.00, 350, 350, 18900.00);
+call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 54.00, 350, 350, 18900.00);
 
 -- tbcompra, tbendereco, tbproduto --
  select * from tbPedidoComprar;
  select * from tbcompra;
  select * from tbfornecedor;
  select * from tbproduto;
+ 
+ delete from tbCompra where NotaFiscal = 21563;
