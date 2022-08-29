@@ -108,7 +108,7 @@ foreign key (NumeroVenda) references tbvendas (NumeroVenda)
 
 create table tbNotafiscal(
 Nf int primary key,
-TotalNota decimal(5, 2) not null,
+TotalNota decimal(7, 2) not null,
 DataEmissao date not null
 );
 
@@ -313,25 +313,17 @@ begin
 			if not exists(select NotaFiscal from tbCompra where vNotaFiscal = NotaFiscal) then
 	insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
 				  values(vNotaFiscal, vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
-	insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
-					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                         (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
-	else	
-		insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
-				  values((select NotaFiscal from tbPedidoComprar where vNotaFiscal = NotaFiscal), vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
-	    insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
-					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                         (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
     end if;
+    insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
+					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
+                         (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
     else
-        select('Produto já cadastrado');
+        select('Produto Não cadastrado');
     end if;
     else  
-		select('Fornecedor já cadastrado!');
+		select('Fornecedor Não cadastrado!');
     end if;
 end $$ 
-
-delete from tbCompra where NotaFiscal = 8459;
 
 call spInsertCom(8459, 'Amoroso e Doce', '2018/05/01', 12345678910111, 22.22, 200, 700, 21944.00);
 call spInsertCom(2482, 'Revenda Chico Loco', '2020/04/22', 12345678910112, 40.50, 180, 180, 7290.00);
@@ -339,10 +331,45 @@ call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678910113, 3.00, 300
 call spInsertCom(8459, 'Amoroso e Doce', '2022/12/04', 12345678910114, 35.00, 500, 700, 21944.00);
 call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 54.00, 350, 350, 18900.00);
 
--- tbcompra, tbendereco, tbproduto --
- select * from tbPedidoComprar;
- select * from tbcompra;
- select * from tbfornecedor;
- select * from tbproduto;
- 
- delete from tbCompra where NotaFiscal = 21563;
+select * from tbPedidoComprar;
+select * from tbcompra;
+
+delimiter $$
+create procedure spInsertVen(vNumeroVenda int, vCliente varchar(200), vDataVenda date, vCodigoBarras bigint, vValorItem decimal(5,2),
+							 vQtd bigint, vTotalVenda decimal (8,2), vNF int)
+begin
+    if(select idCli from tbCliente where vCliente = NomeCli) then
+     if(select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
+       insert into tbVendas(NumeroVenda, DataVenda, TotalVenda, NF, idCli)
+                    values(vNumeroVenda, vDataVenda, vTotalVenda, vNF, (select idCli from tbCliente where vCliente = NomeCli));
+	   insert into tbPedidoVenda(ValorItem, Qtd, CodigoBarras, NumeroVenda)
+                          values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
+                          (select NumeroVenda from tbVendas where vNumeroVenda = NumeroVenda));
+	else
+      select('Produto Não Cadastrado');
+	end if;
+    else
+      select('Cliente Não foi Cadastrado');
+	end if;
+end $$
+
+call spInsertVen(1, 'Pimpão', '2022/08/22', 12345678910111, 54.61, 1, 54.61, null);
+call spInsertVen(2, 'Lança Perfume', '2022/08/22', 12345678910112, 100.45, 2, 200.90, null);
+call spInsertVen(3, 'Pimpão', '2022/08/22', 12345678910113, 44.00, 1, 44.00, null);
+
+select * from tbvendas;
+select * from tbPedidoVenda;
+
+delimiter $$
+create procedure spInsertNF(vNF int)
+begin
+		insert tbNotaFiscal(NF, TotalNota, DataEmissao)
+					 values(vNF, (SELECT SUM(TotalVenda) from tbvendas), (SELECT CURDATE()));
+end $$
+
+-- A procedure spInsertNF tá errada
+
+call spInsertNF(359, 'Pimpão');
+call spInsertNF(360, 'Lança Perfume');
+
+select * from tbNotaFiscal;
