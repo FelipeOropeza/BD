@@ -250,7 +250,7 @@ begin
     end if;
 end$$
 
-call spInsertCliPf('Pumpão', 325, null, 12345051, 12345678911, 12345678, '0', '2000/10/12', 'Av Brasil', 'Lapa', 'São Paulo', 'SP');
+call spInsertCliPf('Pimpão', 325, null, 12345051, 12345678911, 12345678, '0', '2000/10/12', 'Av Brasil', 'Lapa', 'São Paulo', 'SP');
 call spInsertCliPf('Disney Chaplin', 89, 'Ap 12', 12345053, 12345678912, 12345679, '0', '2001/11/21', 'Av Paulista', 'Penha', 'Rio de Janeiro', 'RJ');
 call spInsertCliPf('Marciano', 744, null, 12345054, 12345678913, 12345680, '0', '2001/06/01', 'Rua Ximbú', 'Penha', 'Rio de Janeiro', 'RJ');
 call spInsertCliPf('Lança Perfume', 128, null, 12345059, 12345678914, 12345681, 'X', '2004/04/05', 'Rua Veia', 'Jardin Santa Isabel', 'Cuiabá', 'MT');
@@ -359,17 +359,24 @@ call spInsertVen(3, 'Pimpão', '2022/08/22', 12345678910113, 44.00, 1, 44.00, nu
 
 select * from tbvendas;
 select * from tbPedidoVenda;
+select * from tbCompras;
 
 delimiter $$
-create procedure spInsertNF(vNF int)
+create procedure spInsertNF(vNF int, vNomeCli varchar(200))
 begin
-		insert tbNotaFiscal(NF, TotalNota, DataEmissao)
-					 values(vNF, (SELECT SUM(TotalVenda) from tbvendas), (SELECT CURDATE()));
+declare vIdCli int;
+set vIdCLi = (select idCli from tbcliente where vNomeCli = NomeCli);
+		
+        if not exists(select idCli from tbVendas where idCli = null) then
+        insert tbNotaFiscal(NF, TotalNota, DataEmissao)
+					 values(vNF, (SELECT SUM(TotalVenda) from tbvendas where idCli = vidCli), (SELECT CURDATE()));
+		else
+			select 'Cliente não realizou pedido!';
+		end if;
+        update tbVendas set NF = vNF where IdCli = vIdCli; 
 end $$
 
--- A procedure spInsertNF tá errada
-
 call spInsertNF(359, 'Pimpão');
-call spInsertNF(360, 'Lança Perfume');
+call spInsertNF(360, 'Lança Perfume'); 
 
 select * from tbNotaFiscal;
