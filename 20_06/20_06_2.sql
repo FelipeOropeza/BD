@@ -380,3 +380,20 @@ call spInsertNF(359, 'Pimpão');
 call spInsertNF(360, 'Lança Perfume'); 
 
 select * from tbNotaFiscal;
+
+create view vwEndereco as
+select 
+	tbendereco.cep,
+    tbendereco.logradouro,
+    tbBairro.NomeBairro,
+    tbCidade.NomeCidade,
+    tbUf.Uf
+    from tbendereco inner join tbCidade
+    on (tbendereco.idcidade = tbcidade.idcidade)
+    inner join tbBairro
+    on (tbendereco.Idbairro = tbBairro.IdBairro)
+       inner join tbUF
+    on (tbendereco.IdUF = tbUF.IdUF);
+    
+select * from vwEndereco;
+		
