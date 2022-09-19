@@ -166,6 +166,8 @@ call spInserBairro ("Liberdade");
 
 select* from tbBairro
 
+
+-- Procedure para inserir dados na tabela Produto
 delimiter $$
 create procedure spInserProd(vCodigoBarras bigint, vNome varchar(200),vValorUnitario decimal(5, 2), vQtd int)
 begin
@@ -184,6 +186,8 @@ call spInserProd (12345678910118, "Zelador de cemiterio", 24.50, 100);
 select * from tbProduto;
 describe tbproduto;
 
+
+-- Procedure para inserir dados na tabela Endereco
 delimiter $$
 create procedure spInsertEnde(vCep int, vLogradouro varchar(200), vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
 begin
@@ -219,8 +223,7 @@ select * from tbCidade;
 select * from tbUF;
 select * from tbEndereco;
 
--- Conserta depois --
-
+-- Procedure para inserir dados na tabela ClientePF
 delimiter $$
 create procedure spInsertCliPf(vNomeCLi varchar(200), vNumEnd int, vCompleEnd varchar(50), vCep int, vCpf bigint, vRg bigint, 
 							   vRg_Dig char(1), VNasc date, vLogradouro varchar(200), vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
@@ -261,6 +264,8 @@ select * from tbBairro;
 select * from tbclientpf;
 select * from tbcliente;
 
+
+-- Procedure para inserir dados na tabela ClientePJ
 delimiter $$
 create procedure spInsertCliPj(vNomeCLi varchar(200), vCnpj bigint, vIe bigint, vCep int, vLogradouro varchar(200), vNumEnd int, vCompleEnd varchar(50), 
 							   vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
@@ -303,6 +308,8 @@ select * from tbUf;
 select * from tbbairro;
 select * from tbcidade;
 
+
+-- Procedure para inserir dados na tabela Compra
 delimiter $$
 create procedure spInsertCom(vNotaFiscal int, vNome varchar(200), vDataCompra date, vCodigoBarras bigint, vValorItem decimal(8,2),
                              vQtd int, vQtdTotal bigint, vValorTotal decimal(8,2))
@@ -334,6 +341,8 @@ call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 54.
 select * from tbPedidoComprar;
 select * from tbcompra;
 
+
+-- Procedure para inserir dados na tabela Vendas
 delimiter $$
 create procedure spInsertVen(vNumeroVenda int, vCliente varchar(200), vDataVenda date, vCodigoBarras bigint, vValorItem decimal(5,2),
 							 vQtd bigint, vTotalVenda decimal (8,2), vNF int)
@@ -361,6 +370,7 @@ select * from tbvendas;
 select * from tbPedidoVenda;
 select * from tbCompras;
 
+-- Procedure para inserir dados na tabela Nota Fiscal
 delimiter $$
 create procedure spInsertNF(vNF int, vNomeCli varchar(200))
 begin
@@ -381,7 +391,7 @@ call spInsertNF(360, 'Lança Perfume');
 
 select * from tbNotaFiscal;
 
-create view vwEndereco as
+/* create view vwEndereco as
 select 
 	tbendereco.cep,
     tbendereco.logradouro,
@@ -395,5 +405,66 @@ select
        inner join tbUF
     on (tbendereco.IdUF = tbUF.IdUF);
     
-select * from vwEndereco;
-		
+select * from vwEndereco; */
+
+call spInserProd(12345678910130, 'Camiseta de Poliéster', 35.61, 100);
+call spInserProd(12345678910131, 'Blusa Frio Moletom', 200.00, 100);
+call spInserProd(12345678910132, 'Vestido Decote Redondo', 144.00, 50);
+
+delimiter $$
+create procedure spDeleteProd(vCodBarras bigint)
+begin
+	if exists(select * from tbProduto where codigoBarras = vCodBarras) then
+		delete from tbProduto where codigoBarras = vCodBarras;
+	else
+		select("O Produto não existe!");
+end if;
+end $$
+
+select * from tbProduto;
+call spDeleteProd(12345678910116);
+call spDeleteProd(12345678910117);
+
+delimiter $$
+create procedure spUpdateProd(vCodigoBarras bigint, vValorUnitario decimal(8,2))
+begin
+	update tbProduto set ValorUnitario = vValorUnitario where CodigoBarras = vCodigoBarras;
+end $$
+
+call spUpdateProd(12345678910111, 64.50);
+call spUpdateProd(12345678910112, 120.00);
+call spUpdateProd(12345678910113, 64.00);
+
+select * from tbproduto;
+
+delimiter $$
+create procedure spSelectProd()
+begin
+	select * from tbProduto;
+end $$
+
+call spSelectProd();
+
+create table tbProdHist like tbProduto;
+alter table tbProdHist add Ocorrencia varchar(20);
+alter table tbProdHist add Atualizacao datetime;
+alter table tbProdHist drop primary key;
+alter table tbProdHist add primary key(CodigoBarras, Ocorrencia, Atualizacao);
+describe tbProdHist;
+
+Delimiter $$
+create trigger trgInsertProd after insert on tbProduto
+	for each row
+begin
+	insert into tbProdHist set
+					CodigoBarras = new.CodigoBarras,
+                    Nome = new.Nome,
+                    ValorUnitario = new.Valorunitario,
+                    Qtd = new.Qtd,
+                    Ocorrencia = "Novo",
+                    Atualizacao = current_timestamp();
+end $$
+
+call spInserProd(12345678910119, 'Agua Mineral', 1.99, 500);
+call spSelectProd();
+select * from tbProdHist;
