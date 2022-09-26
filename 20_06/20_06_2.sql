@@ -85,7 +85,7 @@ foreign key (CodigoBarras) references tbproduto (CodigoBarras)
 );
 
 create table tbvendas(
-NumeroVenda int primary key,
+NumeroVenda int primary key auto_increment,
 DataVenda date,
 totalVenda decimal (5, 2) not null,
 Nf int,
@@ -498,4 +498,4 @@ end $$
 select * from tbPedidoVenda;
 select * from tbVendas;
 select * from tbProduto;
-call spInsertVen(199, 'Paganada', '2022/09/26', 12345678910114, 15, null);
+call spInsertVen(5, 'Paganada', '2022/09/26', 12345678910114, 15, null);
