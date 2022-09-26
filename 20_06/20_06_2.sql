@@ -1,6 +1,7 @@
 create database dbdfe;
 use dbdfe;
 
+set sql_safe_updates = 1;
 create table tbcliente(
 idCli int primary key auto_increment not null,
 NomeCli varchar(200) not null,
@@ -344,16 +345,16 @@ select * from tbcompra;
 
 -- Procedure para inserir dados na tabela Vendas
 delimiter $$
-create procedure spInsertVen(vNumeroVenda int, vCliente varchar(200), vDataVenda date, vCodigoBarras bigint, vValorItem decimal(5,2),
-							 vQtd bigint, vTotalVenda decimal (8,2), vNF int)
+create procedure spInsertVen(vNumeroVenda int, vCliente varchar(200), vDataVenda date, vCodigoBarras bigint,
+							 vQtd bigint, vNF int)
 begin
     if(select idCli from tbCliente where vCliente = NomeCli) then
      if(select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
        insert into tbVendas(NumeroVenda, DataVenda, TotalVenda, NF, idCli)
-                    values(vNumeroVenda, vDataVenda, vTotalVenda, vNF, (select idCli from tbCliente where vCliente = NomeCli));
+                    values(vNumeroVenda, vDataVenda, (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras) * vQtd, vNF, (select idCli from tbCliente where vCliente = NomeCli));
 	   insert into tbPedidoVenda(ValorItem, Qtd, CodigoBarras, NumeroVenda)
-                          values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                          (select NumeroVenda from tbVendas where vNumeroVenda = NumeroVenda));
+                          values((select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras), vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
+                          (select NumeroVenda from tbVendas where NumeroVenda = VNumeroVenda));
 	else
       select('Produto Não Cadastrado');
 	end if;
@@ -361,14 +362,17 @@ begin
       select('Cliente Não foi Cadastrado');
 	end if;
 end $$
+SELECT valorUnitario * Qtd from tbProduto;
 
 call spInsertVen(1, 'Pimpão', '2022/08/22', 12345678910111, 54.61, 1, 54.61, null);
 call spInsertVen(2, 'Lança Perfume', '2022/08/22', 12345678910112, 100.45, 2, 200.90, null);
 call spInsertVen(3, 'Pimpão', '2022/08/22', 12345678910113, 44.00, 1, 44.00, null);
+call spInsertVen(17, 'Pimpão','2022/09/26',12345678910114, 5, null);
 
 select * from tbvendas;
 select * from tbPedidoVenda;
 select * from tbCompras;
+select * from tbProduto;
 
 -- Procedure para inserir dados na tabela Nota Fiscal
 delimiter $$
@@ -426,8 +430,9 @@ call spDeleteProd(12345678910116);
 call spDeleteProd(12345678910117);
 
 delimiter $$
-create procedure spUpdateProd(vCodigoBarras bigint, vValorUnitario decimal(8,2))
+create procedure spUpdateProd(vCodigoBarras bigint, vNomeProd varchar(200), vValorUnitario decimal(8,2))
 begin
+	update tbproduto set Nome = vNomeProd where CodigoBarras = vCOdigoBarras;
 	update tbProduto set ValorUnitario = vValorUnitario where CodigoBarras = vCodigoBarras;
 end $$
 
@@ -468,3 +473,38 @@ end $$
 call spInserProd(12345678910119, 'Agua Mineral', 1.99, 500);
 call spSelectProd();
 select * from tbProdHist;
+
+call spInsertVen(4, 'Disney Chaplin', '2022/09/26', 12345678910111, 65.00, 1, 65.00, null);
+call spInsertNF(361, 'Disney Chaplin');
+
+select * from tbVendas order by NumeroVenda desc limit 1;
+select * from tbPedidoVenda order by NumeroVenda desc limit 1;
+select * from tbProduto;
+
+
+call spInserProd(12345678910199, 'Boneca', 21.00, 200);
+select * from tbProdHist;
+select * from tbProduto; 
+call spInserProd(12345678910444, 'Lesma', 180.00, 10);
+call spUpdateProd (12345678910444, 'Lesma Branca', 290.00);
+
+delimiter $$
+create procedure spSelectCli(vNomeCli varchar(200))
+begin
+	select * from tbCliente where NomeCli = vNomeCli;
+end $$
+
+call spSelectCli('Disney Chaplin');
+
+delimiter $$
+create  trigger trgUpProd after insert on tbPedidoVenda
+	for each row
+begin
+	update tbProduto set Qtd = Qtd - new.Qtd where CodigoBarras = new.CodigoBarras; 
+end $$
+
+select * from tbPedidoVenda;
+select * from tbVendas;
+
+select * from tbProduto;
+call spInsertVen(199, 'Paganada', '2022/09/26', 12345678910114, 15, null);
