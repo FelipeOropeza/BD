@@ -1,7 +1,6 @@
 create database dbdfe;
 use dbdfe;
 
-set sql_safe_updates = 1;
 create table tbcliente(
 idCli int primary key auto_increment not null,
 NomeCli varchar(200) not null,
@@ -462,7 +461,7 @@ create trigger trgInsertProd after insert on tbProduto
 	for each row
 begin
 	insert into tbProdHist set
-					CodigoBarras = new.CodigoBarras,
+		CodigoBarras = new.CodigoBarras,
                     Nome = new.Nome,
                     ValorUnitario = new.Valorunitario,
                     Qtd = new.Qtd,
@@ -481,13 +480,6 @@ select * from tbVendas order by NumeroVenda desc limit 1;
 select * from tbPedidoVenda order by NumeroVenda desc limit 1;
 select * from tbProduto;
 
-
-call spInserProd(12345678910199, 'Boneca', 21.00, 200);
-select * from tbProdHist;
-select * from tbProduto; 
-call spInserProd(12345678910444, 'Lesma', 180.00, 10);
-call spUpdateProd (12345678910444, 'Lesma Branca', 290.00);
-
 delimiter $$
 create procedure spSelectCli(vNomeCli varchar(200))
 begin
@@ -505,6 +497,5 @@ end $$
 
 select * from tbPedidoVenda;
 select * from tbVendas;
-
 select * from tbProduto;
 call spInsertVen(199, 'Paganada', '2022/09/26', 12345678910114, 15, null);
