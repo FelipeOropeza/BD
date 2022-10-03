@@ -272,19 +272,19 @@ call spInsertCliPj('Cemreais', 12345678912348, 98765432101, 12345060, 'Rua dos A
 call spInsertCliPj('Durango', 12345678912349, 98765432102, 12345060, 'Rua dos Amores', 1254, null, 'Sei Lá', 'Recife', 'PE');
 
 delimiter $$
-create procedure spInsertCom(vNotaFiscal int, vNome varchar(200), vDataCompra date, vCodigoBarras bigint, vValorItem decimal(8,2),
-                             vQtd int, vQtdTotal bigint, vValorTotal decimal(8,2))
+create procedure spInsertCom(vNotaFiscal int, vNome varchar(200), vDataCompra date, vCodigoBarras bigint, vQtd int, vQtdTotal bigint, vValorTotal decimal(8, 2))
 begin
-
+	set @CodBarra = (select CodigoBarras from tbProduto where CodigoBarras = vCodigoBarras);
+    set @ValorItem = (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras);
+    
 	if (select codigo from tbFornecedor where vNome = Nome) then
-		if (select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
+		if (select CodigoBarras from tbProduto where CodigoBarras = @CodBarra) then
 			if not exists(select NotaFiscal from tbCompra where vNotaFiscal = NotaFiscal) then
 	insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
 				  values(vNotaFiscal, vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
     end if;
     insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
-					     values(vValorItem, vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                         (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
+					     values(@ValorItem, vQtd, @CodBarra, (select NotaFiscal from tbcompra where vNotaFiscal = NotaFiscal));
     else
         select('Produto Não cadastrado');
     end if;
@@ -293,30 +293,36 @@ begin
     end if;
 end $$ 
 
-call spInsertCom(8459, 'Amoroso e Doce', '2018/05/01', 12345678910111, 22.22, 200, 700, 21944.00);
-call spInsertCom(2482, 'Revenda Chico Loco', '2020/04/22', 12345678910112, 40.50, 180, 180, 7290.00);
-call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678910113, 3.00, 300, 300, 900.00);
-call spInsertCom(8459, 'Amoroso e Doce', '2022/12/04', 12345678910114, 35.00, 500, 700, 21944.00);
-call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 54.00, 350, 350, 18900.00);
+call spInsertCom(8459, 'Amoroso e Doce', '2018/05/01', 12345678910111, 200, 700, 21944.00);
+call spInsertCom(2482, 'Revenda Chico Loco', '2020/04/22', 12345678910112, 180, 180, 7290.00);
+call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678910113, 300, 300, 900.00);
+call spInsertCom(8459, 'Amoroso e Doce', '2022/12/04', 12345678910114, 500, 700, 21944.00);
+call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 350, 350, 18900.00);
+
+
+select * from tbCompra;
+select * from tbPedidoComprar;
+select * from tbProduto;
+
+-- QtdTotal é a soma do itens comprados
 
 delimiter $$
-create procedure spInsertVen(vCliente varchar(200), vDataVenda date, vCodigoBarras bigint,
-							 vQtd bigint, vNF int)
+create procedure spInsertVenda(vCliente varchar(200), vDataVenda date, vCodigoBarras bigint, vQtd bigint, vNF int)
 begin
-     if(select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
-       insert into tbVendas(NumeroVenda, DataVenda, TotalVenda, NF, idCli)
-                    values(default, vDataVenda, (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras) * vQtd, vNF, (select idCli from tbCliente where vCliente = NomeCli));
-	   insert into tbPedidoVenda(ValorItem, Qtd, CodigoBarras, NumeroVenda)
-                          values((select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras), vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                          (select NumeroVenda from tbVendas order by NumeroVenda desc limit 1));
-	else
-      select('Produto Não Cadastrado');
-	end if;
+	set @IdCli = (select IdCli from tbCliente where NomeCli = vCliente);
+    set @CodBarras = (select CodigoBarras from tbProduto where CodigoBarras = vCodigoBarras);
+    set @ValorItem = (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras);
+    set @TotalVenda = (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras) * vQtd;
+
+	insert into tbVendas(NumeroVenda, DataVenda, TotalVenda, NF, IdCli) values (default, vDataVenda, @TotalVenda, vNF, @IdCli);
+	insert into tbPedidoVenda(ValorItem, Qtd, CodigoBarras, NumeroVenda) values (@ValorItem, vQtd, @CodBarras, (select NumeroVenda from tbVendas order by NumeroVenda desc limit 1));
 end $$
 
-call spInsertVen('Pimpão','2022/08/22',12345678910111, 1, null);
-call spInsertVen('Lança Perfume', '2022/08/22', 12345678910112, 2, null);
-call spInsertVen('Pimpão', '2022/08/22', 12345678910113, 1, null);
+call spInsertVenda('Pimpão','2022/08/22',12345678910111, 1, null);
+call spInsertVenda('Lança Perfume', '2022/08/22', 12345678910112, 2, null);
+call spInsertVenda('Pimpão', '2022/08/22', 12345678910113, 1, null);
+
+select * from tbProduto;
 
 delimiter $$
 create procedure spInsertNF(vNomeCli varchar(200))
@@ -373,7 +379,11 @@ call spDeleteProd(12345678910117);
 delimiter $$
 create procedure spUpdateProd(vCodigoBarras bigint, vNomeProd varchar(200), vValorUnitario decimal(8,2))
 begin
+	if exists(select * from tbProduto where codigoBarras = vCodigoBarras) then
 	update tbproduto set Nome = vNomeProd, ValorUnitario = vValorUnitario where CodigoBarras = vCodigoBarras;
+    else
+    select 'Produto não existe';
+    end if;
 end $$
 
 call spUpdateProd(12345678910111, 'Rei de Papel Mache', 64.50);
@@ -430,7 +440,7 @@ call spUpdateProd(12345678910119, 'Agua Mineral', 2.99);
 call spSelectProd();
 select * from tbProdHist;
 
-call spInsertVen('Disney Chaplin', '2022/09/26', 12345678910111, 1, null);
+call spInsertVenda('Disney Chaplin', '2022/09/26', 12345678910111, 1, null);
 
 select * from tbVendas order by NumeroVenda desc limit 1;
 select * from tbPedidoVenda order by NumeroVenda desc limit 1;
@@ -456,7 +466,7 @@ end $$
 select * from tbPedidoVenda;
 select * from tbVendas;
 select * from tbProduto;
-call spInsertVen('Paganada', '2022/09/26', 12345678910114, 15, null);
+call spInsertVenda('Paganada', '2022/09/26', 12345678910114, 15, null);
 
 delimiter $$
 create trigger trgUpCompra after insert on tbPedidoComprar for each row
@@ -467,6 +477,4 @@ create trigger trgUpCompra after insert on tbPedidoComprar for each row
 	end;
 $$
 
-call spInsertCom(10548, 'Amoroso e Doce', '2022/09/10', 12345678910111, 40.00, 100, 100, 4000.00);
-
-
+call spInsertCom(10548, 'Amoroso e Doce', '2022/09/10', 12345678910111, 100, 100, 4000.00);
