@@ -1,6 +1,32 @@
 create database dbdfe;
 use dbdfe;
 
+create table tbBairro(
+idBairro int primary key auto_increment,
+NomeBairro varchar(200) not null
+);
+
+create table tbCidade(
+idCidade int primary key auto_increment,
+NomeCidade varchar(200) not null
+);
+
+create table tbUF(
+idUF int primary key auto_increment, 
+UF char (2) not null
+);
+
+create table tbendereco(
+Cep bigint primary key,
+Logradouro varchar(200) not null,
+idBairro int not null,
+foreign key (idBairro) references tbBairro (IdBairro), 
+IdCidade int not null,
+foreign key (IdCidade) references tbCidade (IdCidade),
+IdUF int not null,
+foreign key (IdUF) references tbUF (IdUF)
+);
+
 create table tbcliente(
 idCli int primary key auto_increment not null,
 NomeCli varchar(200) not null,
@@ -25,30 +51,10 @@ idCli int,
 foreign key (idCli) references tbcliente (idCli)
 );
 
-create table tbendereco(
-Cep bigint primary key,
-Logradouro varchar(200) not null,
-idBairro int not null,
-foreign key (idBairro) references tbBairro (IdBairro), 
-IdCidade int not null,
-foreign key (IdCidade) references tbCidade (IdCidade),
-IdUF int not null,
-foreign key (IdUF) references tbUF (IdUF)
-);
-
-create table tbBairro(
-idBairro int primary key auto_increment,
-NomeBairro varchar(200) not null
-);
-
-create table tbCidade(
-idCidade int primary key auto_increment,
-NomeCidade varchar(200) not null
-);
-
-create table tbUF(
-idUF int primary key auto_increment, 
-UF char (2) not null
+create table tbNotafiscal(
+Nf int primary key auto_increment,
+TotalNota decimal(7, 2) not null,
+DataEmissao date not null
 );
 
 create table tbfornecedor(
@@ -58,13 +64,6 @@ Nome varchar(200) not null,
 Telefone bigint unique
 );
 
-create table tbproduto(
-CodigoBarras bigint primary key unique,
-Nome varchar(200) not null,
-ValorUnitario decimal(8, 2) not null,
-Qtd int
-);
-
 create table tbcompra(
 NotaFiscal int primary key,
 DataCompra date not null,
@@ -72,6 +71,13 @@ ValorTotal decimal(8, 2) not null,
 QtdTotal bigint not null,
 codigo smallint,
 foreign key (Codigo) references tbfornecedor (Codigo)
+);
+
+create table tbproduto(
+CodigoBarras bigint primary key,
+Nome varchar(200) not null,
+ValorUnitario decimal(8, 2) not null,
+Qtd int
 );
 
 create table tbPedidoComprar(
@@ -86,30 +92,22 @@ foreign key (CodigoBarras) references tbproduto (CodigoBarras)
 
 create table tbvendas(
 NumeroVenda int primary key auto_increment,
-DataVenda date,
-totalVenda decimal (5, 2) not null,
+DataVenda datetime,
+totalVenda decimal (7, 2) not null,
 Nf int,
 foreign key (Nf) references tbNotafiscal (Nf),
 idCli int,
 foreign key (idCli) references tbcliente (idCli)
 );
 
--- default current_time
-
 create table tbPedidoVenda(
-ValorItem decimal(5, 2) not null,
+ValorItem decimal(6, 2) not null,
 Qtd bigint not null,
 primary key(NumeroVenda, CodigoBarras),
 CodigoBarras bigint, 
 foreign key (CodigoBarras) references tbproduto (CodigoBarras),
 NumeroVenda int, 
 foreign key (NumeroVenda) references tbvendas (NumeroVenda)
-);
-
-create table tbNotafiscal(
-Nf int primary key,
-TotalNota decimal(7, 2) not null,
-DataEmissao date not null
 );
 
 insert into tbfornecedor (Cnpj, Nome, telefone)
@@ -122,8 +120,6 @@ values(1245678937123,'Revenda Chico Loco',11934567897),
 	  (1845678937123,'Franciscano Cachaça',11934567803),
 	  (1945678937123,'Joãozinho Chupeta',11934567804);
       
-select * from tbfornecedor;
-
 delimiter $$
 create procedure spInsertCid(vNomeCida varchar(200))
 begin
@@ -139,8 +135,6 @@ call spInsertCid ("Pirituba");
 call spInsertCid ("Lapa");
 call spInsertCid ("Ponta Grossa");
 
-select * from tbCidade;
-
 delimiter $$
 create procedure spInserEst(vEstado char(2))
 begin
@@ -150,8 +144,6 @@ end $$
 call spInserEst ("SP");
 call spInserEst ("RJ");
 call spInserEst ("RS");
-
-select * from tbUF; 
 
 delimiter $$
 create procedure spInserBairro(vBairro varchar (200))
@@ -164,10 +156,6 @@ call spInserBairro ("Capão Redondo");
 call spInserBairro ("Pirituba");
 call spInserBairro ("Liberdade");
 
-select* from tbBairro
-
-
--- Procedure para inserir dados na tabela Produto
 delimiter $$
 create procedure spInserProd(vCodigoBarras bigint, vNome varchar(200),vValorUnitario decimal(5, 2), vQtd int)
 begin
@@ -183,11 +171,6 @@ call spInserProd (12345678910116, "Boneco do Hitler", 124.00, 200);
 call spInserProd (12345678910117, "Farinha de Surui", 50.00, 200);
 call spInserProd (12345678910118, "Zelador de cemiterio", 24.50, 100);
 
-select * from tbProduto;
-describe tbproduto;
-
-
--- Procedure para inserir dados na tabela Endereco
 delimiter $$
 create procedure spInsertEnde(vCep int, vLogradouro varchar(200), vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
 begin
@@ -218,12 +201,6 @@ call spInsertEnde(12345055, 'Rua Piu XI', 'Penha', 'Campinas', 'SP');
 call spInsertEnde(12345056, 'Rua Chocolate', 'Aclimação', 'Barra Mansa', 'RJ');
 call spInsertEnde(12345057, 'Rua Pão na Chapa', 'Barra Funda', 'Ponta Grossa', 'RS');
 
-select * from tbBairro;
-select * from tbCidade;
-select * from tbUF;
-select * from tbEndereco;
-
--- Procedure para inserir dados na tabela ClientePF
 delimiter $$
 create procedure spInsertCliPf(vNomeCLi varchar(200), vNumEnd int, vCompleEnd varchar(50), vCep int, vCpf bigint, vRg bigint, 
 							   vRg_Dig char(1), VNasc date, vLogradouro varchar(200), vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
@@ -259,13 +236,6 @@ call spInsertCliPf('Marciano', 744, null, 12345054, 12345678913, 12345680, '0', 
 call spInsertCliPf('Lança Perfume', 128, null, 12345059, 12345678914, 12345681, 'X', '2004/04/05', 'Rua Veia', 'Jardin Santa Isabel', 'Cuiabá', 'MT');
 call spInsertCliPf('Remédio Amargo', 2585, null, 12345058, 12345678915, 12345682, '0', '2002/07/15', 'Av Nova', 'Jardin Santa Isabel', 'Cuiabá', 'MT');
 
-select * from tbEndereco;
-select * from tbBairro;
-select * from tbclientpf;
-select * from tbcliente;
-
-
--- Procedure para inserir dados na tabela ClientePJ
 delimiter $$
 create procedure spInsertCliPj(vNomeCLi varchar(200), vCnpj bigint, vIe bigint, vCep int, vLogradouro varchar(200), vNumEnd int, vCompleEnd varchar(50), 
 							   vNomeBairro varchar(50), vNomeCidade varchar(50), vUF char(2))
@@ -301,15 +271,6 @@ call spInsertCliPj('Semgrana', 12345678912347, 98765432100, 12345060, 'Rua dos A
 call spInsertCliPj('Cemreais', 12345678912348, 98765432101, 12345060, 'Rua dos Amores', 5024, 'Sala 23', 'Sei Lá', 'Recife', 'PE');
 call spInsertCliPj('Durango', 12345678912349, 98765432102, 12345060, 'Rua dos Amores', 1254, null, 'Sei Lá', 'Recife', 'PE');
 
-select * from tbclientepj;
-select * from tbcliente;
-select * from tbendereco;
-select * from tbUf;
-select * from tbbairro;
-select * from tbcidade;
-
-
--- Procedure para inserir dados na tabela Compra
 delimiter $$
 create procedure spInsertCom(vNotaFiscal int, vNome varchar(200), vDataCompra date, vCodigoBarras bigint, vValorItem decimal(8,2),
                              vQtd int, vQtdTotal bigint, vValorTotal decimal(8,2))
@@ -338,61 +299,42 @@ call spInsertCom(21563, 'Marcelo Dedal', '2020/07/12', 12345678910113, 3.00, 300
 call spInsertCom(8459, 'Amoroso e Doce', '2022/12/04', 12345678910114, 35.00, 500, 700, 21944.00);
 call spInsertCom(156354, 'Revenda Chico Loco', '2021/11/23', 12345678910115, 54.00, 350, 350, 18900.00);
 
-select * from tbPedidoComprar;
-select * from tbcompra;
-
-
--- Procedure para inserir dados na tabela Vendas
 delimiter $$
-create procedure spInsertVen(vNumeroVenda int, vCliente varchar(200), vDataVenda date, vCodigoBarras bigint,
+create procedure spInsertVen(vCliente varchar(200), vDataVenda date, vCodigoBarras bigint,
 							 vQtd bigint, vNF int)
 begin
-    if(select idCli from tbCliente where vCliente = NomeCli) then
      if(select CodigoBarras from tbProduto where vCodigoBarras = CodigoBarras) then
        insert into tbVendas(NumeroVenda, DataVenda, TotalVenda, NF, idCli)
-                    values(vNumeroVenda, vDataVenda, (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras) * vQtd, vNF, (select idCli from tbCliente where vCliente = NomeCli));
+                    values(default, vDataVenda, (select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras) * vQtd, vNF, (select idCli from tbCliente where vCliente = NomeCli));
 	   insert into tbPedidoVenda(ValorItem, Qtd, CodigoBarras, NumeroVenda)
                           values((select ValorUnitario from tbProduto where CodigoBarras = vCodigoBarras), vQtd, (select CodigoBarras from tbproduto where vCodigoBarras = CodigoBarras),
-                          (select NumeroVenda from tbVendas where NumeroVenda = VNumeroVenda));
+                          (select NumeroVenda from tbVendas order by NumeroVenda desc limit 1));
 	else
       select('Produto Não Cadastrado');
 	end if;
-    else
-      select('Cliente Não foi Cadastrado');
-	end if;
 end $$
-SELECT valorUnitario * Qtd from tbProduto;
 
-call spInsertVen(1, 'Pimpão', '2022/08/22', 12345678910111, 54.61, 1, 54.61, null);
-call spInsertVen(2, 'Lança Perfume', '2022/08/22', 12345678910112, 100.45, 2, 200.90, null);
-call spInsertVen(3, 'Pimpão', '2022/08/22', 12345678910113, 44.00, 1, 44.00, null);
-call spInsertVen(17, 'Pimpão','2022/09/26',12345678910114, 5, null);
+call spInsertVen('Pimpão','2022/08/22',12345678910111, 1, null);
+call spInsertVen('Lança Perfume', '2022/08/22', 12345678910112, 2, null);
+call spInsertVen('Pimpão', '2022/08/22', 12345678910113, 1, null);
 
-select * from tbvendas;
-select * from tbPedidoVenda;
-select * from tbCompras;
-select * from tbProduto;
-
--- Procedure para inserir dados na tabela Nota Fiscal
 delimiter $$
-create procedure spInsertNF(vNF int, vNomeCli varchar(200))
+create procedure spInsertNF(vNomeCli varchar(200))
 begin
 declare vIdCli int;
 set vIdCLi = (select idCli from tbcliente where vNomeCli = NomeCli);
 		
         if not exists(select idCli from tbVendas where idCli = null) then
         insert tbNotaFiscal(NF, TotalNota, DataEmissao)
-					 values(vNF, (SELECT SUM(TotalVenda) from tbvendas where idCli = vidCli), (SELECT CURDATE()));
+					 values(default, (SELECT SUM(TotalVenda) from tbvendas where idCli = vidCli), (SELECT CURDATE()));
 		else
 			select 'Cliente não realizou pedido!';
 		end if;
-        update tbVendas set NF = vNF where IdCli = vIdCli; 
+        update tbVendas set NF = (select Nf from tbNotaFiscal order by Nf desc limit 1) where IdCli = vIdCli; 
 end $$
 
-call spInsertNF(359, 'Pimpão');
-call spInsertNF(360, 'Lança Perfume'); 
-
-select * from tbNotaFiscal;
+call spInsertNF('Pimpão');
+call spInsertNF('Lança Perfume'); 
 
 /* create view vwEndereco as
 select 
@@ -431,13 +373,12 @@ call spDeleteProd(12345678910117);
 delimiter $$
 create procedure spUpdateProd(vCodigoBarras bigint, vNomeProd varchar(200), vValorUnitario decimal(8,2))
 begin
-	update tbproduto set Nome = vNomeProd where CodigoBarras = vCOdigoBarras;
-	update tbProduto set ValorUnitario = vValorUnitario where CodigoBarras = vCodigoBarras;
+	update tbproduto set Nome = vNomeProd, ValorUnitario = vValorUnitario where CodigoBarras = vCodigoBarras;
 end $$
 
-call spUpdateProd(12345678910111, 64.50);
-call spUpdateProd(12345678910112, 120.00);
-call spUpdateProd(12345678910113, 64.00);
+call spUpdateProd(12345678910111, 'Rei de Papel Mache', 64.50);
+call spUpdateProd(12345678910112, 'Bolinha de Sabão', 120.00);
+call spUpdateProd(12345678910113, 'Carro Bate Bate', 64.00);
 
 select * from tbproduto;
 
@@ -453,7 +394,7 @@ create table tbProdHist like tbProduto;
 alter table tbProdHist add Ocorrencia varchar(20);
 alter table tbProdHist add Atualizacao datetime;
 alter table tbProdHist drop primary key;
-alter table tbProdHist add primary key(CodigoBarras, Ocorrencia, Atualizacao);
+alter table tbProdHist add primary key(Ocorrencia, Atualizacao, CodigoBarras);
 describe tbProdHist;
 
 Delimiter $$
@@ -468,13 +409,28 @@ begin
                     Ocorrencia = "Novo",
                     Atualizacao = current_timestamp();
 end $$
-
 call spInserProd(12345678910119, 'Agua Mineral', 1.99, 500);
+select * from tbProdHist;
+
+delimiter $$
+create trigger tgrUpdateProd after update on tbProduto
+	for each row
+begin
+	insert into tbProdHist
+		set  CodigoBarras = new.CodigoBarras,
+			Nome = new.Nome,
+			ValorUnitario = new.ValorUnitario,
+			Qtd = new.Qtd, 
+			Ocorrencia = 'Atualizado',
+			Atualizacao = current_timestamp();
+end$$
+
+call spUpdateProd(12345678910119, 'Agua Mineral', 2.99);
+
 call spSelectProd();
 select * from tbProdHist;
 
-call spInsertVen(4, 'Disney Chaplin', '2022/09/26', 12345678910111, 65.00, 1, 65.00, null);
-call spInsertNF(361, 'Disney Chaplin');
+call spInsertVen('Disney Chaplin', '2022/09/26', 12345678910111, 1, null);
 
 select * from tbVendas order by NumeroVenda desc limit 1;
 select * from tbPedidoVenda order by NumeroVenda desc limit 1;
@@ -489,13 +445,28 @@ end $$
 call spSelectCli('Disney Chaplin');
 
 delimiter $$
-create  trigger trgUpProd after insert on tbPedidoVenda
+create trigger trgUpVenda after insert on tbPedidoVenda
 	for each row
 begin
-	update tbProduto set Qtd = Qtd - new.Qtd where CodigoBarras = new.CodigoBarras; 
+	update tbProduto 
+    set Qtd = Qtd - new.Qtd 
+    where CodigoBarras = new.CodigoBarras; 
 end $$
 
 select * from tbPedidoVenda;
 select * from tbVendas;
 select * from tbProduto;
-call spInsertVen(5, 'Paganada', '2022/09/26', 12345678910114, 15, null);
+call spInsertVen('Paganada', '2022/09/26', 12345678910114, 15, null);
+
+delimiter $$
+create trigger trgUpCompra after insert on tbPedidoComprar for each row
+	begin
+        update tbProduto set 
+        Qtd = Qtd + new.Qtd
+        where CodigoBarras = new.CodigoBarras;
+	end;
+$$
+
+call spInsertCom(10548, 'Amoroso e Doce', '2022/09/10', 12345678910111, 40.00, 100, 100, 4000.00);
+
+
