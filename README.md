@@ -1,2 +1,1 @@
 # BD
-Exercicio 19
