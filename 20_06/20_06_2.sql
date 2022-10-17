@@ -40,15 +40,15 @@ Cpf bigint primary key not null,
 Rg bigint not null,
 Rg_dig char(1) not null,
 Nasc date not null,
-idCli int,
-foreign key (idCli) references tbcliente (idCli)
+idCliPf int,
+foreign key (idCliPf) references tbcliente (idCli)
 );
 
 create table tbclientepj(
 Cnpj bigint primary key unique,
 Ie bigint unique,
-idCli int,
-foreign key (idCli) references tbcliente (idCli)
+idCliPj int,
+foreign key (idCliPj) references tbcliente (idCli)
 );
 
 create table tbNotafiscal(
@@ -223,7 +223,7 @@ begin
       end if;
 		insert into tbcliente(NomeCli, NumEnd, CompleEnd, Cep)
                     values(vNomeCli,vNumEnd, vCompleEnd, vCep);
-		insert into tbclientpf(Cpf, Rg, Rg_dig, Nasc, Idcli)
+		insert into tbclientpf(Cpf, Rg, Rg_dig, Nasc, Idclipf)
                     values(vCpf, vRg, vRg_Dig, vNasc, (select Idcli from tbcliente where NomeCli = vNomeCli order by Idcli desc limit 1));
 	else
 	    select "informaçoes já resgistradas";
@@ -258,7 +258,7 @@ begin
       end if;
 		insert into tbcliente(NomeCli, NumEnd, CompleEnd, Cep)
                     values(vNomeCli,vNumEnd, vCompleEnd, vCep);
-		insert into tbclientepj(Cnpj, Ie, Idcli)
+		insert into tbclientepj(Cnpj, Ie, Idclipj)
                     values(vCnpj, vIe, (select Idcli from tbcliente where NomeCli = vNomeCli order by Idcli desc limit 1));
 	else
 	    select "informaçoes já resgistradas";
@@ -478,3 +478,35 @@ create trigger trgUpCompra after insert on tbPedidoComprar for each row
 $$
 
 call spInsertCom(10548, 'Amoroso e Doce', '2022/09/10', 12345678910111, 100, 100, 4000.00);
+
+select * from tbcliente
+inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
+
+select * from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj;
+
+select
+tbcliente.IdCli,
+tbcliente.NomeCli,
+tbclientepj.Cnpj,
+tbclientepj.Ie,
+tbclientepj.IdClipj from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj;
+
+select
+tbcliente.Idcli,
+tbcliente.NomeCli,
+tbclientpf.Cpf,
+tbclientpf.Rg,
+tbclientpf.Nasc from tbcliente
+inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
+
+select * from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
+inner join tbendereco on tbcliente.cep = tbendereco.cep;
+
+select tbcliente.IdCli, tbcliente.NomeCli, tbcliente.NumEnd, tbcliente.CompleEnd, tbcliente.Cep, tbendereco.logradouro, tbbairro.NomeBairro, tbcidade.NomeCidade from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
+inner join tbendereco on tbcliente.cep = tbendereco.cep
+inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
+inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade;
