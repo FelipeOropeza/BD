@@ -505,8 +505,18 @@ select * from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
 inner join tbendereco on tbcliente.cep = tbendereco.cep;
 
-select tbcliente.IdCli, tbcliente.NomeCli, tbcliente.NumEnd, tbcliente.CompleEnd, tbcliente.Cep, tbendereco.logradouro, tbbairro.NomeBairro, tbcidade.NomeCidade from tbcliente
+select 
+tbcliente.IdCli, 
+tbcliente.NomeCli, 
+tbcliente.NumEnd, 
+tbcliente.CompleEnd, 
+tbcliente.Cep, 
+tbendereco.logradouro, 
+tbbairro.NomeBairro, 
+tbcidade.NomeCidade, 
+tbuf.UF from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
 inner join tbendereco on tbcliente.cep = tbendereco.cep
 inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
-inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade;
+inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
+inner join tbuf on tbendereco.IdUf = tbuf.idUF;
