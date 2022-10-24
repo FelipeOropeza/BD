@@ -69,8 +69,8 @@ NotaFiscal int primary key,
 DataCompra date not null,
 ValorTotal decimal(8, 2) not null,
 QtdTotal bigint not null,
-codigo smallint,
-foreign key (Codigo) references tbfornecedor (Codigo)
+CodComp smallint,
+foreign key (CodComp) references tbfornecedor (Codigo)
 );
 
 create table tbproduto(
@@ -280,7 +280,7 @@ begin
 	if (select codigo from tbFornecedor where vNome = Nome) then
 		if (select CodigoBarras from tbProduto where CodigoBarras = @CodBarra) then
 			if not exists(select NotaFiscal from tbCompra where vNotaFiscal = NotaFiscal) then
-	insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, codigo)
+	insert into tbcompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, CodComp)
 				  values(vNotaFiscal, vDataCompra, vValorTotal, vQtdTotal, (select codigo from tbfornecedor where vNome = Nome));
     end if;
     insert into tbPedidoComprar(ValorItem, Qtd, CodigoBarras, NotaFiscal)
@@ -479,12 +479,15 @@ $$
 
 call spInsertCom(10548, 'Amoroso e Doce', '2022/09/10', 12345678910111, 100, 100, 4000.00);
 
+-- EX 32--
 select * from tbcliente
 inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
 
+-- EX 33--
 select * from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj;
 
+-- EX 34--
 select
 tbcliente.IdCli,
 tbcliente.NomeCli,
@@ -493,6 +496,7 @@ tbclientepj.Ie,
 tbclientepj.IdClipj from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj;
 
+-- EX 35--
 select
 tbcliente.Idcli,
 tbcliente.NomeCli,
@@ -501,10 +505,12 @@ tbclientpf.Rg,
 tbclientpf.Nasc from tbcliente
 inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
 
+-- EX 36--
 select * from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
 inner join tbendereco on tbcliente.cep = tbendereco.cep;
 
+-- EX 37--
 select 
 tbcliente.IdCli, 
 tbcliente.NomeCli, 
@@ -520,3 +526,52 @@ inner join tbendereco on tbcliente.cep = tbendereco.cep
 inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
 inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
 inner join tbuf on tbendereco.IdUf = tbuf.idUF;
+
+-- EX 38 --
+
+DELIMITER $$
+create procedure spSelectInnerCliPF(vIdCli int)
+begin
+	select 
+	tbcliente.IdCli, 
+	tbcliente.NomeCli, 
+	tbcliente.NumEnd, 
+	tbcliente.CompleEnd, 
+	tbcliente.Cep,
+    tbclientpf.Cpf,
+    tbclientpf.Rg,
+    tbclientpf.Rg_dig,
+    tbclientpf.Nasc,
+	tbendereco.logradouro, 
+	tbbairro.NomeBairro, 
+	tbcidade.NomeCidade, 
+	tbuf.UF from tbcliente
+	inner join tbclientpf on tbcliente.IdCli = tbclientpf.idCliPF
+	inner join tbendereco on tbcliente.cep = tbendereco.cep
+	inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
+	inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
+	inner join tbuf on tbendereco.IdUf = tbuf.idUF where idCli = vIdCli;
+end;
+$$
+
+call spSelectInnerCliPF(2);
+
+-- EX 39 --
+select * from tbproduto
+	left join tbpedidovenda on tbproduto.CodigoBarras = tbPedidoVenda.CodigoBarras;
+    
+-- EX 40 --
+select * from tbCompra
+	right join tbFornecedor on tbFornecedor.Codigo = tbCompra.CodComp;
+    
+-- EX 41 --
+select 
+	tbFornecedor.Codigo,
+    tbFornecedor.Cnpj,
+    tbFornecedor.Nome,
+    tbFornecedor.Telefone
+	from tbFornecedor
+	right join tbcompra on tbFornecedor.Codigo = tbcompra.CodComp where Codigo = 2;
+    
+    select * from tbFornecedor;
+    select * from tbCompra;
