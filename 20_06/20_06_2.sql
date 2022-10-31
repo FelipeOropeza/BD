@@ -498,11 +498,11 @@ inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj;
 
 -- EX 35--
 select
-tbcliente.Idcli,
-tbcliente.NomeCli,
-tbclientpf.Cpf,
-tbclientpf.Rg,
-tbclientpf.Nasc from tbcliente
+tbcliente.Idcli "Codigo",
+tbcliente.NomeCli "Nome",
+tbclientpf.Cpf "CPF",
+tbclientpf.Rg "RG",
+tbclientpf.Nasc "Data de Nascimento" from tbcliente
 inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
 
 -- EX 36--
@@ -512,15 +512,15 @@ inner join tbendereco on tbcliente.cep = tbendereco.cep;
 
 -- EX 37--
 select 
-tbcliente.IdCli, 
-tbcliente.NomeCli, 
-tbcliente.NumEnd, 
-tbcliente.CompleEnd, 
-tbcliente.Cep, 
-tbendereco.logradouro, 
-tbbairro.NomeBairro, 
-tbcidade.NomeCidade, 
-tbuf.UF from tbcliente
+tbcliente.IdCli "Id", 
+tbcliente.NomeCli "NomeCli", 
+tbcliente.NumEnd "NumEnd", 
+tbcliente.CompleEnd "CompEnd", 
+tbcliente.Cep "CEP", 
+tbendereco.logradouro "Logradouro", 
+tbbairro.NomeBairro "Bairro", 
+tbcidade.NomeCidade "Cidade", 
+tbuf.UF "UF" from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
 inner join tbendereco on tbcliente.cep = tbendereco.cep
 inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
@@ -533,19 +533,19 @@ DELIMITER $$
 create procedure spSelectInnerCliPF(vIdCli int)
 begin
 	select 
-	tbcliente.IdCli, 
-	tbcliente.NomeCli, 
-	tbcliente.NumEnd, 
-	tbcliente.CompleEnd, 
-	tbcliente.Cep,
-    tbclientpf.Cpf,
-    tbclientpf.Rg,
-    tbclientpf.Rg_dig,
-    tbclientpf.Nasc,
-	tbendereco.logradouro, 
-	tbbairro.NomeBairro, 
-	tbcidade.NomeCidade, 
-	tbuf.UF from tbcliente
+	tbcliente.IdCli "Código", 
+	tbcliente.NomeCli "Nome", 
+	tbcliente.NumEnd "Número", 
+	tbcliente.CompleEnd "Complemento", 
+	tbcliente.Cep "CEP",
+    tbclientpf.Cpf "CPF",
+    tbclientpf.Rg "RG",
+    tbclientpf.Rg_dig "Dígito",
+    tbclientpf.Nasc "Data de Nascimento",
+	tbendereco.logradouro "Logradouro", 
+	tbbairro.NomeBairro "Bairro", 
+	tbcidade.NomeCidade "Cidade", 
+	tbuf.UF "UF" from tbcliente
 	inner join tbclientpf on tbcliente.IdCli = tbclientpf.idCliPF
 	inner join tbendereco on tbcliente.cep = tbendereco.cep
 	inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
@@ -555,6 +555,7 @@ end;
 $$
 
 call spSelectInnerCliPF(2);
+call spSelectInnerCliPF(11);
 
 -- EX 39 --
 select * from tbproduto
@@ -565,13 +566,37 @@ select * from tbCompra
 	right join tbFornecedor on tbFornecedor.Codigo = tbCompra.CodComp;
     
 -- EX 41 --
-select 
-	tbFornecedor.Codigo,
-    tbFornecedor.Cnpj,
-    tbFornecedor.Nome,
-    tbFornecedor.Telefone
-	from tbFornecedor
-	right join tbcompra on tbFornecedor.Codigo = tbcompra.CodComp where Codigo = 2;
+select
+	tbFornecedor.Codigo "Código",
+    tbFornecedor.Cnpj "CNPJ",
+    tbFornecedor.Nome "Nome",
+    tbFornecedor.Telefone "Telefone"
+	from tbcompra
+	right join tbfornecedor on tbCompra.CodComp = tbfornecedor.Codigo where tbcompra.CodComp is null;
     
-    select * from tbFornecedor;
-    select * from tbCompra;
+-- EX 42 --
+select
+	tbCliente.idCli "Id",
+    tbCliente.NomeCli "NomeCli",
+    tbVendas.DataVenda "DataVenda",
+    tbPedidoVenda.CodigoBarras "CodigoBarras",
+    tbProduto.Nome "Nome",
+    tbPedidoVenda.ValorItem "ValorItem"
+    from tbCliente
+    inner join tbVendas on tbCliente.idCli = tbVendas.idCli
+    inner join tbPedidoVenda on tbvendas.NumeroVenda = tbPedidoVenda.NumeroVenda
+    inner join tbProduto on tbPedidoVenda.CodigoBarras = tbProduto.CodigoBarras order by tbCliente.NomeCli;
+    
+-- EX 43 ==
+
+select
+	tbBairro.NomeBairro
+	from tbCliente
+	left join tbEndereco on tbBairro.Idbairro = tbEndereco.IdBairro
+    left join tbCliente on tbEndereco.Cep = tbCliente.Cep
+    left join tbVendas on tbCliente.IdCli = tbVendas.IdCLi
+    where tbVendas.IdCli is null;
+    
+select * from tbpedidovenda;
+select * from tbendereco;
+select * from tbcliente;
