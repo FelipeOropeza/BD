@@ -589,12 +589,19 @@ select
     
 -- EX 43 ==
 
-select
-	tbBairro.NomeBairro
-	from tbCliente
+select 
+	tbBairro.NomeBairro,
+    tbCliente.Cep,
+    tbCliente.NomeCli,
+	tbCliente.IdCli,
+    tbEndereco.Cep,
+    tbVendas.IdCli,
+    tbVendas.NumeroVenda,
+    tbVendas.Nf
+	from tbBairro
 	left join tbEndereco on tbBairro.Idbairro = tbEndereco.IdBairro
     left join tbCliente on tbEndereco.Cep = tbCliente.Cep
-    left join tbVendas on tbCliente.IdCli = tbVendas.IdCLi
+    left join tbVendas on tbCliente.IdCli = tbVendas.IdCli
     where tbVendas.IdCli is null;
     
 select * from tbpedidovenda;
