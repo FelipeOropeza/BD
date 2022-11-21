@@ -32,7 +32,7 @@ idCli int primary key auto_increment not null,
 NomeCli varchar(200) not null,
 NumEnd int null,
 CompleEnd varchar(50),
-Cep bigint not null, foreign key (Cep) references tbendereco (Cep)
+CepCli bigint not null, foreign key (CepCli) references tbendereco (Cep)
 );
 
 create table tbclientpf(
@@ -221,7 +221,7 @@ begin
                        (select idCidade from tbCidade where vNomeCidade = NomeCidade), 
 				       (select idUf from tbUF where vUF = UF));
       end if;
-		insert into tbcliente(NomeCli, NumEnd, CompleEnd, Cep)
+		insert into tbcliente(NomeCli, NumEnd, CompleEnd, CepCli)
                     values(vNomeCli,vNumEnd, vCompleEnd, vCep);
 		insert into tbclientpf(Cpf, Rg, Rg_dig, Nasc, Idclipf)
                     values(vCpf, vRg, vRg_Dig, vNasc, (select Idcli from tbcliente where NomeCli = vNomeCli order by Idcli desc limit 1));
@@ -256,7 +256,7 @@ begin
                        (select idCidade from tbCidade where vNomeCidade = NomeCidade), 
 				       (select idUf from tbUF where vUF = UF));
       end if;
-		insert into tbcliente(NomeCli, NumEnd, CompleEnd, Cep)
+		insert into tbcliente(NomeCli, NumEnd, CompleEnd, CepCli)
                     values(vNomeCli,vNumEnd, vCompleEnd, vCep);
 		insert into tbclientepj(Cnpj, Ie, Idclipj)
                     values(vCnpj, vIe, (select Idcli from tbcliente where NomeCli = vNomeCli order by Idcli desc limit 1));
@@ -508,7 +508,7 @@ inner join tbclientpf on tbcliente.IdCli = tbclientpf.IdClipf;
 -- EX 36--
 select * from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
-inner join tbendereco on tbcliente.cep = tbendereco.cep;
+inner join tbendereco on tbcliente.CepCli = tbendereco.cep;
 
 -- EX 37--
 select 
@@ -516,13 +516,13 @@ tbcliente.IdCli "Id",
 tbcliente.NomeCli "NomeCli", 
 tbcliente.NumEnd "NumEnd", 
 tbcliente.CompleEnd "CompEnd", 
-tbcliente.Cep "CEP", 
+tbcliente.CepCli "CEP", 
 tbendereco.logradouro "Logradouro", 
 tbbairro.NomeBairro "Bairro", 
 tbcidade.NomeCidade "Cidade", 
 tbuf.UF "UF" from tbcliente
 inner join tbclientepj on tbcliente.IdCli = tbclientepj.IdClipj
-inner join tbendereco on tbcliente.cep = tbendereco.cep
+inner join tbendereco on tbcliente.CepCli = tbendereco.cep
 inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
 inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
 inner join tbuf on tbendereco.IdUf = tbuf.idUF;
@@ -537,7 +537,7 @@ begin
 	tbcliente.NomeCli "Nome", 
 	tbcliente.NumEnd "Número", 
 	tbcliente.CompleEnd "Complemento", 
-	tbcliente.Cep "CEP",
+	tbcliente.CepCli"CEP",
     tbclientpf.Cpf "CPF",
     tbclientpf.Rg "RG",
     tbclientpf.Rg_dig "Dígito",
@@ -547,7 +547,7 @@ begin
 	tbcidade.NomeCidade "Cidade", 
 	tbuf.UF "UF" from tbcliente
 	inner join tbclientpf on tbcliente.IdCli = tbclientpf.idCliPF
-	inner join tbendereco on tbcliente.cep = tbendereco.cep
+	inner join tbendereco on tbcliente.CepCli = tbendereco.cep
 	inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
 	inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
 	inner join tbuf on tbendereco.IdUf = tbuf.idUF where idCli = vIdCli;
@@ -587,23 +587,96 @@ select
     inner join tbPedidoVenda on tbvendas.NumeroVenda = tbPedidoVenda.NumeroVenda
     inner join tbProduto on tbPedidoVenda.CodigoBarras = tbProduto.CodigoBarras order by tbCliente.NomeCli;
     
--- EX 43 ==
-
-select 
-	tbBairro.NomeBairro,
-    tbCliente.Cep,
-    tbCliente.NomeCli,
-	tbCliente.IdCli,
-    tbEndereco.Cep,
-    tbVendas.IdCli,
-    tbVendas.NumeroVenda,
-    tbVendas.Nf
+-- EX 43 --
+select distinct
+	tbBairro.NomeBairro
 	from tbBairro
 	left join tbEndereco on tbBairro.Idbairro = tbEndereco.IdBairro
-    left join tbCliente on tbEndereco.Cep = tbCliente.Cep
-    left join tbVendas on tbCliente.IdCli = tbVendas.IdCli
+    left join tbCliente on tbCliente.CepCli = tbEndereco.Cep
+    right join tbVendas on tbVendas.IdCli = tbCliente.IdCli
     where tbVendas.IdCli is null;
-    
+
 select * from tbpedidovenda;
 select * from tbendereco;
 select * from tbcliente;
+
+-- EX 44 --
+create view vwFornecedor as select Codigo, Nome as 'Fornecedor', Telefone from tbfornecedor;
+select * from vwFornecedor;
+
+-- EX 45 --
+select Fornecedor as 'Nome', Telefone from vwFornecedor;
+
+-- EX 46 --
+create view vwClienteJuridica as
+select 
+	tbcliente.IdCli "Id", 
+	tbcliente.NomeCli "NomeCli", 
+	tbcliente.CepCli "CEP",
+	tbendereco.logradouro "Logradouro", 
+	tbcliente.NumEnd "NumEnd", 
+	tbcliente.CompleEnd "CompEnd", 
+	tbbairro.NomeBairro "Bairro", 
+	tbcidade.NomeCidade "Cidade", 
+	tbuf.UF "UF" from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.idCliPj
+inner join tbendereco on tbcliente.CepCli = tbendereco.cep
+inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
+inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
+inner join tbuf on tbendereco.IdUf = tbuf.idUF;
+
+-- EX 47 --
+select Id as 'Codigo', NomeCli as 'Cliente', CEP, Logradouro as 'Endereço', NumEnd as 'Número', CompEnd as 'Complemento', Bairro, Cidade, Uf from vwClienteJuridica;
+
+-- EX 48 --
+create view vwClienteFisico as
+	select 
+	tbcliente.IdCli,
+	tbcliente.NomeCli,
+	tbcliente.NumEnd,
+	tbcliente.CompleEnd,
+	tbcliente.CepCli,
+    tbclientpf.Cpf,
+    tbclientpf.Rg,
+    tbclientpf.Rg_dig,
+    tbclientpf.Nasc,
+	tbendereco.logradouro,
+	tbbairro.NomeBairro,
+	tbcidade.NomeCidade,
+	tbuf.UF "UF" from tbcliente
+	inner join tbclientpf on tbcliente.IdCli = tbclientpf.idCliPF
+	inner join tbendereco on tbcliente.CepCli= tbendereco.cep
+	inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
+	inner join tbcidade on tbendereco.IdCidade = tbcidade.IdCidade
+	inner join tbuf on tbendereco.IdUf = tbuf.idUF;
+
+select * from vwClienteFisico;
+
+-- EX 49 --
+select IdCli as 'Codigo', NomeCli as 'Cliente', Cpf as 'CPF', RG, Rg_dig as Dig, Nasc as 'Nascimento' from vwClienteFisico;
+
+-- EX 50 --
+create or replace view vwClienteJuridica as
+select 
+	tbcliente.IdCli "Id", 
+	tbcliente.NomeCli "NomeCli",
+    tbclientepj.Cnpj,
+    tbclientepj.Ie,
+	tbcliente.CepCli "CEP",
+	tbendereco.logradouro "Logradouro", 
+	tbcliente.NumEnd "NumEnd", 
+	tbcliente.CompleEnd "CompEnd", 
+	tbbairro.NomeBairro "Bairro", 
+	tbcidade.NomeCidade "Cidade", 
+	tbuf.UF "UF" from tbcliente
+inner join tbclientepj on tbcliente.IdCli = tbclientepj.idCliPj
+inner join tbendereco on tbcliente.CepCli = tbendereco.cep
+inner join tbbairro on tbendereco.Idbairro = tbbairro.Idbairro
+inner join tbcidade on tbendereco.Idcidade = tbcidade.IdCidade
+inner join tbuf on tbendereco.IdUf = tbuf.idUF;
+select * from vwClienteJuridica;
+
+-- EX 51 --
+select Id, NomeCli, CEP, Logradouro, NumEnd, CompEnd, Bairro, Cidade, Uf from vwClienteJuridica inner join tbclientepj on Id = tbclientepj.idCliPj
+union 
+select IdCli, NomeCli, CepCli, logradouro, NumEnd, CompleEnd, NomeBairro, NomeCidade, Uf from vwClienteFisico inner join tbclientpf on IdCli = tbclientpf.idCliPf;
